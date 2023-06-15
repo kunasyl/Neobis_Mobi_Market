@@ -42,6 +42,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    username = models.CharField(db_index=True, max_length=255, unique=True)
     email = models.EmailField(db_index=True, unique=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -49,8 +50,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    USERNAME_FIELD = 'email'
-    # REQUIRED_FIELDS = ['email']
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
 
     objects = UserManager()
 
@@ -95,9 +96,8 @@ class Profile(models.Model):
     last_name = models.CharField(
         max_length=150, verbose_name=_('Фамилия')
     )
-    username = models.CharField(db_index=True, max_length=255)
+    avatar = models.ImageField(upload_to='users/', blank=True, null=True)
     birth_date = models.DateField(verbose_name=_('Дата рождения'))
-    email = models.EmailField(unique=True, blank=True, null=True, verbose_name=_('Почта'))
     phone_number = PhoneNumberField(blank=True, null=True, unique=True, verbose_name=_('Номер телефона'))
 
     created_at = models.DateTimeField(auto_now_add=True)

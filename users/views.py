@@ -16,7 +16,6 @@ from . import serializers, services, repos, permissions
 from users.tokens import account_activation_token
 
 auth_services = services.AuthServices()
-email_services = services.EmailServices()
 
 
 class RegisterView(APIView):
@@ -36,42 +35,6 @@ class RegisterView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class RequestPasswordRecoverView(APIView):
-    repos = repos.AuthRepos()
-    # permission_classes = [permissions.IsActiveUserPermission]
-
-    @swagger_auto_schema(rmethod='POST', request_body=serializers.CreateUserSerializer())
-    @action(detail=False, methods=['POST'])
-    def post(self, request, *args, **kwargs):
-        email = request.data['email']
-        email_sent = email_services.resetPassword(request=request, user_email=email)
-
-        if email_sent:
-            user = self.repos.get_user_by_email(email=email)
-            data = {
-                "msg": f"На вашу почту {email} было отправлено письмо",
-                "user_id": user.id
-            }
-            return Response(data, status=status.HTTP_200_OK)
-
-        return Response(f"Ошибка отправки письма на почту {email}.", status=status.HTTP_400_BAD_REQUEST)
-
-
-# Пользователь переходит по данной ссылке для смены пароля
-def recover_password(request, uidb64, token):
-    user = auth_services.check_activation_link(uidb64)
-
-    # If link active
-    if user is not None and account_activation_token.check_token(user, token):
-        return render(
-            request=request,
-            template_name="users/recover_password.html",
-            context={"user_id": user.id}
-        )
-    else:
-        HttpResponseNotFound("Ссылка неактивна")
 
 
 class UpdatePasswordView(APIView):
@@ -105,6 +68,7 @@ class UpdatePasswordView(APIView):
         return Response(validated_result, status=status.HTTP_400_BAD_REQUEST)
 
 
+# TO-DO
 def activate(request, uidb64, token):
     user = auth_services.check_activation_link(uidb64)
 
@@ -124,7 +88,7 @@ def activate(request, uidb64, token):
 
 class ProfileForm(APIView):
     repos = repos.AuthRepos()
-    permission_classes = [permissions.IsActiveUserPermission]
+    # permission_classes = [permissions.IsActiveUserPermission]
 
     @swagger_auto_schema(method='POST', request_body=serializers.CreateProfileSerializer())
     @action(detail=False, methods=['POST'])
@@ -140,6 +104,13 @@ class ProfileForm(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(responses={200: serializers.RetrieveProfileSerializer()})
+    def get(self, request, *args, **kwargs):
+        profile = self.repos.get_profile(user_id=kwargs['user_id'])
+        serializer = serializers.RetrieveProfileSerializer(profile)
+
+        return Response(serializer.data)
+
 
 class LoginView(APIView):
     repos = repos.AuthRepos()
@@ -150,11 +121,11 @@ class LoginView(APIView):
     def post(self, request):
         serializer = serializers.LoginSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data['email']
+            username = serializer.validated_data['username']
             password = serializer.validated_data['password']
 
             # Perform authentication logic
-            user = authenticate(request, email=email, password=password)
+            user = authenticate(request, username=username, password=password)
 
             if user is not None:
                 # Authentication succeeded
@@ -167,7 +138,7 @@ class LoginView(APIView):
                 data = {
                     'token': token,
                     'user_id': user.id,
-                    'email': user.email,
+                    'username': user.username,
                 }
                 return Response(data, status=status.HTTP_200_OK)
             else:

@@ -55,32 +55,3 @@ class AuthServices:
             return {'error': 'Passwords do not match.'}
         return password1
 
-
-class EmailServices:
-    # Отправка ссылки для активации аккаунта на почту
-    def activateEmail(self, request, user, to_email):
-        mail_subject = "Активация аккаунта"
-        message = render_to_string("users/email_templates/activate_account.html", {
-            'user': user.email,
-            'domain': get_current_site(request).domain,
-            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-            'token': account_activation_token.make_token(user),
-            "protocol": 'https' if request.is_secure() else 'http'
-        })
-        email = EmailMessage(mail_subject, message, to=[to_email])
-        return email.send()
-
-    # Отправка ссылки на смену пароля на почту
-    def resetPassword(self, request, user_email):
-        associated_user = get_user_model().objects.filter(Q(email=user_email)).first()
-        if associated_user:
-            subject = "Запрос на смену пароля"
-            message = render_to_string("users/email_templates/password_reset_request.html", {
-                'user': associated_user,
-                'domain': get_current_site(request).domain,
-                'uid': urlsafe_base64_encode(force_bytes(associated_user.pk)),
-                'token': account_activation_token.make_token(associated_user),
-                "protocol": 'https' if request.is_secure() else 'http'
-            })
-            email = EmailMessage(subject, message, to=[associated_user.email])
-            return email.send()
