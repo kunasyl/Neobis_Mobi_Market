@@ -8,32 +8,29 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, password=None):
+    def create_user(self, username, password=None):
         """
         Создает и возвращает пользователя с имэйлом, паролем и именем.
         """
-        # if username is None:
-        #     raise TypeError('Users must have a username.')
-
-        if email is None:
-            raise TypeError('Users must have an email address.')
+        if username is None:
+            raise TypeError('Users must have a username.')
 
         # user = self.model(username=username, email=self.normalize_email(email))
-        user = self.model(email=self.normalize_email(email))
+        user = self.model(username=username)
         if password:
             user.set_password(password)
         user.save()
 
         return user
 
-    def create_superuser(self, email, password):
+    def create_superuser(self, username, password):
         """
         Создает и возвращет пользователя с привилегиями суперадмина.
         """
         if password is None:
             raise TypeError('Superusers must have a password.')
 
-        user = self.create_user(email, password)
+        user = self.create_user(username, password)
         user.is_superuser = True
         user.is_staff = True
         user.save()
@@ -51,7 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     updated_at = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
+    # REQUIRED_FIELDS = ['email']
 
     objects = UserManager()
 
@@ -61,7 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = _('Пользователи')
 
     def __str__(self):
-        return self.email
+        return self.username
 
     @property
     def token(self):
