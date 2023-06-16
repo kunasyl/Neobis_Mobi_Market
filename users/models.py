@@ -1,5 +1,6 @@
-import jwt, uuid
 from datetime import datetime, timedelta
+
+import jwt
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
@@ -106,5 +107,5 @@ class Profile(models.Model):
         verbose_name_plural = _('Профили')
 
     def __str__(self):
-        return f"{self.email}"
+        return f"{self.last_name} {self.first_name}"
 

@@ -34,11 +34,11 @@ class RetrieveProfileSerializer(serializers.ModelSerializer):
     email = serializers.SerializerMethodField()
 
     def get_username(self, obj):
-        user = repos.get_user(user_id=obj.user_id)
+        user = repos.get_user(user_id=obj.user_id.id)
         return user.username
 
     def get_email(self, obj):
-        user = repos.get_user(user_id=obj.user_id)
+        user = repos.get_user(user_id=obj.user_id.id)
         return user.email
 
     class Meta:

@@ -88,7 +88,7 @@ def activate(request, uidb64, token):
 
 class ProfileForm(APIView):
     repos = repos.AuthRepos()
-    # permission_classes = [permissions.IsActiveUserPermission]
+    permission_classes = [permissions.IsAuthorizedPermission]
 
     @swagger_auto_schema(method='POST', request_body=serializers.CreateProfileSerializer())
     @action(detail=False, methods=['POST'])
