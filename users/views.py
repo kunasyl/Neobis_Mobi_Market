@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from django.http import HttpResponse, HttpResponseNotFound
+from rest_framework.exceptions import NotFound
 import json
 from django.contrib import messages
 from django.shortcuts import render, redirect
@@ -12,7 +13,7 @@ from django.contrib.auth import authenticate, login
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-from . import serializers, services, repos, permissions
+from . import serializers, services, repos, permissions, models
 from users.tokens import account_activation_token
 
 auth_services = services.AuthServices()
@@ -74,7 +75,7 @@ def activate(request, uidb64, token):
 
     # If link active
     if user is not None and account_activation_token.check_token(user, token):
-        user.is_active = True  # активировать пользователя
+        user.is_verified = True  # активировать пользователя
         user.save()
         # return redirect('form', user_id=user.id)
         return render(
@@ -87,14 +88,15 @@ def activate(request, uidb64, token):
 
 
 class ProfileForm(APIView):
+    model = models.Profile
     repos = repos.AuthRepos()
     permission_classes = [permissions.IsAuthorizedPermission]
 
     @swagger_auto_schema(method='POST', request_body=serializers.CreateProfileSerializer())
     @action(detail=False, methods=['POST'])
-    def post(self, request, user_id):
+    def post(self, request):
         context = {
-            'user_id': user_id
+            'user_id': request.user.id
         }
         serializer = serializers.CreateProfileSerializer(data=request.data, context=context)
         if serializer.is_valid(raise_exception=True):
@@ -106,7 +108,10 @@ class ProfileForm(APIView):
 
     @swagger_auto_schema(responses={200: serializers.RetrieveProfileSerializer()})
     def get(self, request, *args, **kwargs):
-        profile = self.repos.get_profile(user_id=kwargs['user_id'])
+        try:
+            profile = self.repos.get_profile(user_id=request.user.id)
+        except self.model.DoesNotExist:
+            raise NotFound("Вы еще не создали профиль.")
         serializer = serializers.RetrieveProfileSerializer(profile)
 
         return Response(serializer.data)

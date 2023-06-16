@@ -16,7 +16,6 @@ class CreateUserSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
 
         user = models.User.objects.create(**validated_data)
-        user.is_active = False
         user.save()
 
         return user
