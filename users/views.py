@@ -111,7 +111,7 @@ class ProfileForm(APIView):
         try:
             profile = self.repos.get_profile(user_id=request.user.id)
         except self.model.DoesNotExist:
-            raise NotFound("Вы еще не создали профиль.")
+            return Response({"detail": "Вы еще не создали профиль."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = serializers.RetrieveProfileSerializer(profile)
 
         return Response(serializer.data)
@@ -120,7 +120,7 @@ class ProfileForm(APIView):
 class LoginView(APIView):
     repos = repos.AuthRepos()
     services = services.AuthServices()
-    # permission_classes = [permissions.IsActiveUserPermission]
+    # permission_classes = [permissions.IsVerifiedUserPermission]
 
     @swagger_auto_schema(request_body=serializers.LoginSerializer())
     def post(self, request):

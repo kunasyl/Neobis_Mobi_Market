@@ -4,7 +4,7 @@ from rest_framework import exceptions
 from . import repos
 
 
-class IsActiveUserPermission(BasePermission):
+class IsVerifiedUserPermission(BasePermission):
     repos = repos.AuthRepos()
     message = "Ваш аккаунт неактивен. Пройдите по ссылке, которую мы отправили вам на почту."
 
@@ -12,7 +12,7 @@ class IsActiveUserPermission(BasePermission):
         user_id = view.kwargs.get('user_id')
         user = self.repos.get_user(user_id=user_id)
 
-        if not user.is_active:
+        if not user.is_verified:
             raise exceptions.PermissionDenied(detail=self.message)
 
         return True
