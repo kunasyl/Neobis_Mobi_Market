@@ -90,14 +90,14 @@ class Profile(models.Model):
         verbose_name=_('Пользователь')
     )
     first_name = models.CharField(
-        max_length=150, verbose_name=_('Имя')
+        max_length=150, null=True, blank=True, verbose_name=_('Имя')
     )
     last_name = models.CharField(
-        max_length=150, verbose_name=_('Фамилия')
+        max_length=150, null=True, blank=True, verbose_name=_('Фамилия')
     )
-    avatar = models.ImageField(upload_to='users/', blank=True, null=True)
-    birth_date = models.DateField(verbose_name=_('Дата рождения'))
-    phone_number = PhoneNumberField(blank=True, null=True, unique=True, verbose_name=_('Номер телефона'))
+    avatar = models.ImageField(upload_to='users/', blank=True, null=True, verbose_name=_('Аватар'))
+    birth_date = models.DateField(null=True, blank=True, verbose_name=_('Дата рождения'))
+    phone_number = PhoneNumberField(default='0(000) 000 000', verbose_name=_('Номер телефона'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -110,3 +110,7 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.last_name} {self.first_name}"
 
+
+class PhoneVerification(models.Model):
+    phone_number = PhoneNumberField(null=True, blank=True, unique=True, verbose_name=_('Номер телефона'))
+    code = models.CharField(null=True, blank=True, max_length=4, verbose_name=_('Код'))

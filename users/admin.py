@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import User, Profile
+from .models import User, Profile, PhoneVerification
 
 
 class ProfileInline(admin.TabularInline):
@@ -16,4 +16,5 @@ class UserAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Profile)
+admin.site.register(PhoneVerification)
 admin.site.register(User, UserAdmin)

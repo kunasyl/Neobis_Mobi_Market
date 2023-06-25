@@ -21,5 +21,14 @@ class AuthRepos:
 
         return user
 
+
+class ProfileRepos:
+    user_model = models.User
+    profile_model = models.Profile
+
     def get_profile(self, user_id):
-        return self.profile.objects.get(user_id=user_id)
+        return self.profile_model.objects.get(user_id=user_id)
+
+    def get_phone_number(self, user_id):
+        profile = self.get_profile(user_id=user_id)
+        return profile.phone_number

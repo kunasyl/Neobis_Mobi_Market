@@ -17,6 +17,7 @@ from . import serializers, services, repos, permissions, models
 from users.tokens import account_activation_token
 
 auth_services = services.AuthServices()
+profile_services = services.ProfileServices()
 
 
 class RegisterView(APIView):
@@ -25,11 +26,7 @@ class RegisterView(APIView):
     @swagger_auto_schema(method='POST', request_body=serializers.CreateUserSerializer())
     @action(detail=False, methods=['POST'])
     def post(self, request, *args, **kwargs):
-        context = {
-            'request': request
-        }
-
-        serializer = serializers.CreateUserSerializer(data=request.data, context=context)
+        serializer = serializers.CreateUserSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
 
@@ -69,36 +66,16 @@ class UpdatePasswordView(APIView):
         return Response(validated_result, status=status.HTTP_400_BAD_REQUEST)
 
 
-# TO-DO
-def activate(request, uidb64, token):
-    user = auth_services.check_activation_link(uidb64)
-
-    # If link active
-    if user is not None and account_activation_token.check_token(user, token):
-        user.is_verified = True  # активировать пользователя
-        user.save()
-        # return redirect('form', user_id=user.id)
-        return render(
-            request=request,
-            template_name="users/activate.html",
-            context={"user_id": user.id}
-        )
-    else:
-        return HttpResponseNotFound("Ссылка неактивна")
-
-
 class ProfileForm(APIView):
     model = models.Profile
-    repos = repos.AuthRepos()
+    repos = repos.ProfileRepos()
     permission_classes = [permissions.IsAuthorizedPermission]
 
-    @swagger_auto_schema(method='POST', request_body=serializers.CreateProfileSerializer())
-    @action(detail=False, methods=['POST'])
-    def post(self, request):
-        context = {
-            'user_id': request.user.id
-        }
-        serializer = serializers.CreateProfileSerializer(data=request.data, context=context)
+    @swagger_auto_schema(method='PUT', request_body=serializers.UpdateProfileSerializer())
+    @action(detail=False, methods=['PUT'])
+    def put(self, request):
+        profile = self.repos.get_profile(user_id=request.user.id)
+        serializer = serializers.UpdateProfileSerializer(profile, data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
 
@@ -117,10 +94,50 @@ class ProfileForm(APIView):
         return Response(serializer.data)
 
 
+class UpdatePhoneNumberView(APIView):
+    """
+    Send SMS to phone number for verification.
+    """
+    user_model = models.User
+    repos = repos.ProfileRepos()
+    permission_classes = [permissions.IsAuthorizedPermission]
+
+    @swagger_auto_schema(method='POST', request_body=serializers.UpdatePhoneNumberSerializer())
+    @action(detail=False, methods=['POST'])
+    def post(self, request):
+        serializer = serializers.UpdatePhoneNumberSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PhoneNumberVerificationView(APIView):
+    """
+    Check verification code sent to phone number
+    """
+    permission_classes = [permissions.IsAuthorizedPermission]
+
+    @swagger_auto_schema(method='POST', request_body=serializers.VerifyCodeSerializer())
+    @action(detail=False, methods=['POST'])
+    def post(self, request, phone_number):
+        context = {
+            'phone_number': phone_number,
+            'user_id': request.user.id
+        }
+        serializer = serializers.VerifyCodeSerializer(data=request.data, context=context)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class LoginView(APIView):
     repos = repos.AuthRepos()
     services = services.AuthServices()
-    # permission_classes = [permissions.IsVerifiedUserPermission]
 
     @swagger_auto_schema(request_body=serializers.LoginSerializer())
     def post(self, request):
