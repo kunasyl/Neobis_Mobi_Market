@@ -8,7 +8,8 @@ from rest_framework.decorators import action
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.views import APIView
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -176,3 +177,14 @@ class LoginView(APIView):
         serializer.is_valid(raise_exception=True)
         tokens = self.services.create_token(data=serializer.validated_data)
         return tokens
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthorizedPermission]
+
+    def post(self, request):
+        try:
+            logout(request)
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)

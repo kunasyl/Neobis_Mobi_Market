@@ -6,7 +6,7 @@ from users.models import User
 
 
 class Product(models.Model):
-    user = models.ForeignKey(
+    user_id = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE,
         related_name='user_products',
@@ -18,7 +18,9 @@ class Product(models.Model):
     long_description = models.TextField(verbose_name=_('Длинное описание'))
 
     # Главное изображение
-    product_image = models.ImageField(upload_to='products/%Y/%m/%d', verbose_name='Изображение товара')
+    product_image = models.ImageField(
+        null=True, blank=True, upload_to='products/%Y/%m/%d', verbose_name='Изображение товара'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
