@@ -94,12 +94,6 @@ class UpdatePhoneNumberSerializer(serializers.ModelSerializer):
 
 
 class VerifyCodeSerializer(serializers.Serializer):
-    # class Meta:
-    #     model = models.PhoneVerification
-    #     fields = '__all__'
-    #     extra_kwargs = {
-    #         'code': {'required': True}
-    #     }
     code = serializers.CharField(max_length=4)
 
     def create(self, validated_data):

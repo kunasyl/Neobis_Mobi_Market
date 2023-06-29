@@ -2,6 +2,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework.decorators import action
 
 from utils import mixins
 from . import serializers, models, permissions, repos
@@ -33,6 +34,7 @@ class ProductViewSet(mixins.ActionSerializerMixin, ModelViewSet):
 
 
 class UserProductView(APIView):
+    model = models.Product
     repos = repos.ProductRepos()
     permission_classes = [permissions.IsProductOwner]
 
@@ -41,7 +43,37 @@ class UserProductView(APIView):
         try:
             product = self.repos.get_user_products(user_id=request.user.id)
         except self.model.DoesNotExist:
-            return Response({"detail": "У вас нет товара."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "У вас нет товаров."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = serializers.ProductSerializer(product, many=True)
 
         return Response(serializer.data)
+
+
+class FavoriteProductView(APIView):
+    model = models.FavoriteProduct
+    repos = repos.ProductRepos()
+    permission_classes = [user_permissions.IsAuthorizedPermission]
+
+    @swagger_auto_schema(responses={200: serializers.FavoriteProductSerializer(many=True)})
+    def get(self, request, *args, **kwargs):
+        try:
+            favorites = self.repos.get_favorite_products(user_id=request.user.id)
+        except self.model.DoesNotExist:
+            return Response({"detail": "У вас нет понравившихся товаров."}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = serializers.FavoriteProductSerializer(favorites, many=True)
+
+        return Response(serializer.data)
+
+    @swagger_auto_schema(method='POST', request_body=serializers.FavoriteProductSerializer())
+    @action(detail=False, methods=['POST'])
+    def post(self, request):
+        context = {
+            'user_id': request.user
+        }
+        serializer = serializers.FavoriteProductSerializer(data=request.data, context=context)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

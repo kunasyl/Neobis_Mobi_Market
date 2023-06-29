@@ -9,6 +9,10 @@ router = DefaultRouter()
 router.register(r'', ProductViewSet)
 urlpatterns = [
     path('my_products/', UserProductView.as_view(), name='user_products'),
+    path('my_products/<int:pk>/', ProductViewSet.as_view({'get': 'retrieve'}), name='user_product'),
+
+    path('favorites/', FavoriteProductView.as_view(), name='user_favorites'),
+    path('favorites/<int:pk>', ProductViewSet.as_view({'get': 'retrieve'}), name='user_favorite'),
     path('', include(router.urls)),
 ]
 
