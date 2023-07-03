@@ -13,3 +13,9 @@ class ProductRepos:
 
     def get_favorite_products(self, user_id):
         return self.favorites.objects.filter(user_id=user_id)
+
+    def favorite_product_exist(self, product_id):
+        return self.favorites.objects.filter(id=product_id).exists()
+
+    def get_favorite_product(self, product_id):
+        return self.favorites.objects.get(id=product_id)

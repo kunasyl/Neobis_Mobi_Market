@@ -21,6 +21,12 @@ class ProductViewSet(mixins.ActionSerializerMixin, ModelViewSet):
     queryset = models.Product.objects.all()
     permission_classes = [user_permissions.IsAuthorizedPermission]
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['user_id'] = self.request.user
+
+        return context
+
     @swagger_auto_schema(
         operation_description="Get products",
         responses={200: serializers.ProductSerializer(many=True)}
@@ -77,3 +83,16 @@ class FavoriteProductView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        product_id = request.data.get('product_id')
+        product = self.model.objects.get(product_id=product_id)
+        serializer = serializers.FavoriteProductSerializer(product, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

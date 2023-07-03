@@ -40,6 +40,7 @@ class ProductImage(models.Model):
         verbose_name=_('Товар')
     )
     image = models.ImageField(upload_to='products_images/%Y/%m/%d', verbose_name=_('Изображение'))
+    likes_count = models.IntegerField(default=0, verbose_name=_('Количество лайков'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -57,7 +58,7 @@ class FavoriteProduct(models.Model):
         related_name='user_favorites',
         verbose_name=_('Пользователь')
     )
-    product_id = models.ForeignKey(
+    product_id = models.OneToOneField(
         to=Product,
         on_delete=models.CASCADE,
         related_name='product_favorites',

@@ -1,6 +1,12 @@
 from django.contrib import admin
 
 from .models import User, Profile, PhoneVerification
+from products.models import FavoriteProduct
+
+
+class FavoritesInline(admin.TabularInline):
+    model = FavoriteProduct
+    extra = 1
 
 
 class ProfileInline(admin.TabularInline):
@@ -9,12 +15,10 @@ class ProfileInline(admin.TabularInline):
 
 
 class UserAdmin(admin.ModelAdmin):
-    # list_display = ('name', 'cinema_id', 'place_count', 'row_count', 'seat_count')
-    # list_filter = ('cinema_id', )
-    # search_fields = ('cinema_id', )
-    inlines = (ProfileInline, )
+    inlines = (ProfileInline, FavoritesInline)
 
 
 admin.site.register(Profile)
+admin.site.register(FavoriteProduct)
 admin.site.register(PhoneVerification)
 admin.site.register(User, UserAdmin)

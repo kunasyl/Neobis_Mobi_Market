@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from . import models
+from . import models, repos
+
+repos = repos.ProductRepos()
 
 
 class ProductLikeSerializer(serializers.ModelSerializer):
@@ -15,23 +17,29 @@ class ProductLikeSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    # likes_count = ProductLikeSerializer()
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    likes_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = models.Product
         fields = '__all__'
 
+    def create(self, validated_data):
+        user_id = self.context.get('user_id')
+        product = models.Product.objects.create(user_id=user_id, **validated_data)
+
+        return product
+
 
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ProductImage
-        fields = ('image', )
+        fields = ('image',)
 
 
 # Serializer for product details
 class RetrieveProductSerializer(serializers.ModelSerializer):
     product_images = ProductImageSerializer(many=True)
-    # likes_count = ProductLikeSerializer()
 
     class Meta:
         model = models.Product
@@ -42,13 +50,13 @@ class RetrieveProductSerializer(serializers.ModelSerializer):
         product = models.Product.objects.create(**validated_data)
         for image_data in images_data:
             models.ProductImage.objects.create(product=product, **image_data)
+
         return product
 
 
 class FavoriteProductSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(source='user.id', read_only=True)
     product_id = serializers.PrimaryKeyRelatedField(queryset=models.Product.objects.all())
-    # likes_count = ProductLikeSerializer()
 
     class Meta:
         model = models.FavoriteProduct
@@ -58,10 +66,20 @@ class FavoriteProductSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         product_data = ProductSerializer(instance.product_id).data
         representation['product'] = product_data
+
         return representation
 
     def create(self, validated_data):
         user_id = self.context.get('user_id')
         product_id = validated_data.get('product_id')
+
         favorite = models.FavoriteProduct.objects.create(user_id=user_id, product_id=product_id)
+
         return favorite
+
+    def update(self, instance, validated_data):
+        product = models.Product.objects.get(id=instance.product_id.id)
+        product.likes_count += 1
+        product.save()
+
+        return instance
